@@ -33,6 +33,7 @@ def parse_blast_results():
     dict_amount_of_matches_lengthx_to_each_grna = {}
     dict_amount_for_each_match_for_each_grna = {}
     dict_amount_for_each_match_for_each_grna_hit_id_n_range = {}
+
     for all_gene_hits in blast_result:
         dict_amount_of_matches_lengthx_to_each_grna[all_gene_hits.id] = {}
         for gene_i in all_gene_hits.hsps:
@@ -62,7 +63,7 @@ def parse_blast_results():
 
     df_amount_of_matches_lengthx_to_each_grna = df_amount_of_matches_lengthx_to_each_grna.fillna(0)
     df_amount_for_each_match_for_each_grna = df_amount_for_each_match_for_each_grna.fillna(0)
-    return df_amount_of_matches_lengthx_to_each_grna, df_amount_for_each_match_for_each_grna, dict_amount_for_each_match_for_each_grna_hit_id_n_range
+    return df_amount_of_matches_lengthx_to_each_grna, df_amount_for_each_match_for_each_grna, dict_amount_for_each_match_for_each_grna_hit_id_n_range, dict_amount_for_each_match_for_each_grna
 
 
 def amount_of_grna_for_each_match(df):
@@ -74,7 +75,7 @@ def amount_of_grna_for_each_match(df):
     plt.savefig(config['blast_results'] + '/Amount of gRNA matches to each similarity rate in the cow genome')
     plt.close()
 
-
+# Old function that is not correct
 def sum_amount_for_each_match_for_each_grna_sum_from_20_to_i(df):
     results_dir_sum_name = utilities.create_dir(
         config['blast_results'] + config['sum_amount_for_each_match_for_each_grna_sum_from_20_to_i'])
@@ -119,7 +120,7 @@ def for_each_match_for_each_grna(df):
         plt.savefig(results_dir_name + '/for_each_match_for_each_grna_' + str(i_match) + '.svg')
         plt.close()
 
-
+# Amount of gRNA that has X nuc matches in the genome
 def groups_of_amount_of_guides_per_match(df_amount_for_each_match_for_each_grna):
     results_dir = utilities.create_dir(config['blast_results'] + config['sum_amount_of_gRNA_with_match_in_bin_x_i'])
 
@@ -140,6 +141,8 @@ def groups_of_amount_of_guides_per_match(df_amount_for_each_match_for_each_grna)
 
         plt.bar(list(dict_amount_for_each_match_for_each_grna.keys()),
                 list(dict_amount_for_each_match_for_each_grna.values()), width=0.3)
+
+        plt.locator_params(integer=True)
         plt.ylabel('Amount of gRNA')
         plt.xlabel('Sum of gRNA with ' + str(columns_name) + 'nuc match')
         plt.title('Amount of gRNA with (' + str(columns_name) + ') nuc match')
@@ -149,6 +152,8 @@ def groups_of_amount_of_guides_per_match(df_amount_for_each_match_for_each_grna)
 
         utilities.df_to_csv(df_amount_for_each_match_for_each_grna[columns_name], results_dir
                   + '/Amount of gRNA with (' + str(columns_name) + ') nuc match.csv')
+
+        return dict_amount_for_each_match_for_each_grna
 
 
 def histograms(df_amount_of_matches_lengthx_to_each_grna, df_amount_for_each_match_for_each_grna):
@@ -160,8 +165,8 @@ def histograms(df_amount_of_matches_lengthx_to_each_grna, df_amount_for_each_mat
 
     for_each_match_for_each_grna(df_amount_for_each_match_for_each_grna_after_drop_grna)
     sum_amount_for_each_match_for_each_grna_sum_from_20_to_i(df_amount_for_each_match_for_each_grna_after_drop_grna)
-    groups_of_amount_of_guides_per_match(df_amount_for_each_match_for_each_grna_after_drop_grna)
-
+    dict_amount_for_each_match_for_each_grna = groups_of_amount_of_guides_per_match(df_amount_for_each_match_for_each_grna_after_drop_grna)
+    #sum_amount_for_each_match_for_each_grna_sum_from_20_to_i(dict_amount_for_each_match_for_each_grna)
     # Dropped gRNA that has too many matches, write them in csv
     df_amount_for_each_match_for_each_grna_too_many_matches = df_amount_for_each_match_for_each_grna.loc[
         config['drop_grna_that_has_too_many_matches_in_cow_genome']]
@@ -170,6 +175,7 @@ def histograms(df_amount_of_matches_lengthx_to_each_grna, df_amount_for_each_mat
 
 
 
+# TODO only on the 19 and 20 matches - and not find all the 16-18 matches
 def compare_cow_genome_to_grna_locations(dict_gff_cow_genome_name_n_location_rec,
                                          dict_blast_amount_for_each_match_for_each_grna_hit_id_n_range):
     print('compare_cow_genome_to_grna_locations')
@@ -195,6 +201,9 @@ def compare_cow_genome_to_grna_locations(dict_gff_cow_genome_name_n_location_rec
         is_in_blast = False
         for location_blast in dict_blast_amount_for_each_match_for_each_grna_hit_id_n_range[name]:
             for location_gff in dict_gff_cow_genome_name_n_location_rec[name]:
+                # TODO: Add a search also by gene name (like ADNP, remove the numbers in blast)
+                # TODO only on the 19 and 20 matches - and not find all the 16-18 matches
+                #  ADD the gene name even if it is not in the gff at all
                 if (location_blast[0] >= location_gff[0]) and (location_blast[1] <= location_gff[1]):
                     print(
                         f'{name}, ({location_blast[0]} >= {location_gff[0]}) and ({location_blast[1]} <= {location_gff[1]})')
@@ -212,10 +221,35 @@ def compare_cow_genome_to_grna_locations(dict_gff_cow_genome_name_n_location_rec
 
     return dict_grna_in_cow_genome
 
+def find_grna_that_didnt_have_perfect_match_in_genome(dict_amount_for_each_match_for_each_grna):
+    # uncommented = 'C:\\Users\\Inbal\\PycharmProjects\\CrisprAnalyzeDataCow\\Data\\results_table.txt'
+    # blast_result = SearchIO.parse(uncommented, 'blast-tab')
+    df_guides_3k_file = utilities.open_folder(config['guides_3k_file_name'])
+
+    seq_in_3k_and_not_in_blast_results_header = ['Name']
+    seq_in_3k_and_not_in_blast_results_data = []
+    file_path = config['blast_results'] + '/gRNA that didnt have a perfect match in genome.csv'
+
+    for guides_3k_seq in df_guides_3k_file.Name:
+        is_found_seq = False
+        for blast_result_seq in dict_amount_for_each_match_for_each_grna[20]:
+            if guides_3k_seq == blast_result_seq:
+                is_found_seq = True
+                break
+        if is_found_seq == False:
+            seq_in_3k_and_not_in_blast_results_data.append([guides_3k_seq])
+
+    utilities.write_rows_to_csv(file_path, seq_in_3k_and_not_in_blast_results_header, seq_in_3k_and_not_in_blast_results_data)
+
 
 if __name__ == '__main__':
     print('parse_blast_results')
-    df_amount_of_matches_lengthx_to_each_grna, df_amount_for_each_match_for_each_grna, dict_blast_amount_for_each_match_for_each_grna_hit_id_n_range = parse_blast_results()
+    df_amount_of_matches_lengthx_to_each_grna, \
+    df_amount_for_each_match_for_each_grna, \
+    dict_blast_amount_for_each_match_for_each_grna_hit_id_n_range, \
+    dict_amount_for_each_match_for_each_grna = parse_blast_results()
+    print('find_grna_that_didnt_have_perfect_match_in_genome')
+    find_grna_that_didnt_have_perfect_match_in_genome(dict_amount_for_each_match_for_each_grna)
     print('histograms')
     histograms(df_amount_of_matches_lengthx_to_each_grna, df_amount_for_each_match_for_each_grna)
     print('gff_blast_parse')

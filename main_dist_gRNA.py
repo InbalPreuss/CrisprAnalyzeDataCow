@@ -1,15 +1,9 @@
-import math
-
+import utilities
 from config import config
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from Levenshtein import distance as lev
-
-
-def open_folder():
-    df_guides_3k_file_name = pd.read_excel(config['guides_3k_file_name'])
-    return df_guides_3k_file_name
 
 
 def calculate_dist_2_3(df_guides_3k_file_name, dist_calculation_name):
@@ -148,7 +142,7 @@ def hist_per_dist(dict_dist_count, dist_calculation_name):
 
 
 if __name__ == '__main__':
-    # df_guides_3k_file_name = open_folder()
+    df_guides_3k_file_name = utilities.open_folder(config['guides_3k_file_name'])
     # Hamming
     # hamming_dist_matrix, dict_per_dist_hamming, dict_dist_count_hamming = calculate_dist(df_guides_3k_file_name, 'hamming')
     # dict_dist_2_3_hamming = calculate_dist_2_3(df_guides_3k_file_name, 'hamming')
